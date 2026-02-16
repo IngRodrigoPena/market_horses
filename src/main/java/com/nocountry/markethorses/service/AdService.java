@@ -1,6 +1,7 @@
 package com.nocountry.markethorses.service;
 
 import com.nocountry.markethorses.domain.*;
+import com.nocountry.markethorses.domain.audit.AuditAction;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,6 +12,7 @@ public class AdService {
 
     private final List<Ad>ads = new ArrayList<>();
     private Long nextId = 1L;
+    private final AuditService auditService;
 
     public Ad createAd(User user, String horseName, String breed, Integer age){
 
@@ -34,10 +36,12 @@ public class AdService {
         ad.setStatus(AdStatus.PUBLICADO);*/
        //agrega a la lista
         ads.add(ad);
+        //log
+        auditService.register(user.getId(), AuditAction.AD_CREATED,Ad.class.getSimpleName());
         return(ad);
     }
 
-    private Ad findAdById(long id){
+    private Ad findAdById(Long id){
         return ads.stream()
                 .filter(ad->ad.getId().equals(id))
                 .findFirst()
@@ -48,9 +52,14 @@ public class AdService {
     public Ad editAd(Long id, User actor, String name, String breed, Integer age){
          Ad ad = findAdById(id);
         ad.edit(actor,name,breed,age);
+        //log
+        auditService.register(actor.getId(),AuditAction.AD_UPDATED,Ad.class.getSimpleName());
         return ad;
     }
 
+    public AdService(AuditService auditService){
+        this.auditService = auditService;
+    }
 }
 
 
