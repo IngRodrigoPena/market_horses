@@ -18,7 +18,7 @@ public class AdService {
 
         //Regla: solo SELLER puede crear anuncio
         if(user.getRole() != Role.SELLER){
-            throw  new IllegalArgumentException("Solo un SELLER puede puede crear un anuncio.");
+            throw  new IllegalArgumentException("Solo un SELLER puede crear un anuncio.");
         }
 
         //Crear Horse
@@ -28,12 +28,7 @@ public class AdService {
         horse.setAge(age);
         horse.setOwner(user);
         //create AD (nace en BORRADOR automaticamente)
-        Ad ad = new Ad(horse,user);
-
-        //simular ID autogenerado
-        ad.setId(nextId++);
-        /*Simulacion prueba 3
-        ad.setStatus(AdStatus.PUBLICADO);*/
+        Ad ad = new Ad(nextId++,horse,user);
        //agrega a la lista
         ads.add(ad);
         //log
@@ -41,7 +36,7 @@ public class AdService {
         return(ad);
     }
 
-    private Ad findAdById(Long id){
+    private Ad getAdOrThrow(Long id){
         return ads.stream()
                 .filter(ad->ad.getId().equals(id))
                 .findFirst()
@@ -50,7 +45,7 @@ public class AdService {
     }
 
     public Ad editAd(Long id, User actor, String name, String breed, Integer age){
-         Ad ad = findAdById(id);
+         Ad ad = getAdOrThrow(id);
         ad.edit(actor,name,breed,age);
         //log
         auditService.register(actor.getId(),AuditAction.AD_UPDATED,Ad.class.getSimpleName());

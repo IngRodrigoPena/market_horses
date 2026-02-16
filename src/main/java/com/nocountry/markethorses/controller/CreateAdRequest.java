@@ -8,7 +8,6 @@ public class CreateAdRequest {
     private Integer age;
 
     //getters and setters
-
     public Long getUserId() {
         return userId;
     }

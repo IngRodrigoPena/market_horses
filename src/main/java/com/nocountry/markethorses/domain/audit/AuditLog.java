@@ -23,7 +23,6 @@ public class AuditLog {
     }
 
     //geters
-
     public Long getId() {
         return id;
     }
