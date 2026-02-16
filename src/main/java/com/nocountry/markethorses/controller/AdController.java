@@ -4,9 +4,7 @@ import com.nocountry.markethorses.domain.Ad;
 import com.nocountry.markethorses.domain.Role;
 import com.nocountry.markethorses.domain.User;
 import com.nocountry.markethorses.service.AdService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class AdController {
@@ -33,4 +31,21 @@ public class AdController {
                 request.getAge()
         );
     }
+
+    @PutMapping("/ads/{id}")
+    public Ad editAd(@PathVariable Long id,
+                     @RequestBody EditAdRequest request){
+        User actor = new User();
+        actor.setId(request.getUserId());
+        actor.setName("SellerDemo");
+        actor.setRole(Role.SELLER);
+
+        return adService.editAd(
+                id,
+                actor,
+                request.getHorseName(),
+                request.getBreed(),
+                request.getAge());
+    }
+
 }

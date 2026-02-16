@@ -21,9 +21,9 @@ public class Horse {
         return id;
     }
 
-    public void setId(Long id) {
+    /*public void setId(Long id) {
         this.id = id;
-    }
+    }*/
 
     public String getBreed() {
         return breed;
@@ -47,5 +47,11 @@ public class Horse {
 
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    public void updateData(String name, String breed, Integer age){
+        this.name = name;
+        this.breed = breed;
+        this.age = age;
     }
 }
