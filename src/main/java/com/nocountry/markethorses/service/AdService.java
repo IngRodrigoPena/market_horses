@@ -2,19 +2,23 @@ package com.nocountry.markethorses.service;
 
 import com.nocountry.markethorses.domain.*;
 import com.nocountry.markethorses.domain.audit.AuditAction;
+import com.nocountry.markethorses.domain.repository.AdRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.ArrayList;
 
 @Service
 public class AdService {
 
-    private final List<Ad>ads = new ArrayList<>();
-    private Long nextId = 1L;
+    private final AdRepository adRepository;
     private final AuditService auditService;
+    private Long nextId = 1L;
 
-    public Ad createAd(User user, String horseName, String breed, Integer age){
+    public AdService(AdRepository adRepository,
+                     AuditService auditService){
+        this.adRepository = adRepository;
+        this.auditService = auditService;
+    }
+
+    public Ad createAd(User user,String horseName,String breed,Integer age){
 
         //Regla: solo SELLER puede crear anuncio
         if(user.getRole() != Role.SELLER){
@@ -30,30 +34,36 @@ public class AdService {
         //create AD (nace en BORRADOR automaticamente)
         Ad ad = new Ad(nextId++,horse,user);
        //agrega a la lista
-        ads.add(ad);
+        adRepository.save(ad);
         //log
-        auditService.register(user.getId(), AuditAction.AD_CREATED,Ad.class.getSimpleName());
+        auditService.register(user.getId(),
+                              AuditAction.AD_CREATED,
+                              Ad.class.getSimpleName());
         return(ad);
     }
 
-    private Ad getAdOrThrow(Long id){
-        return ads.stream()
-                .filter(ad->ad.getId().equals(id))
-                .findFirst()
-                .orElseThrow(()->
-                        new IllegalArgumentException("Anuncio NO encontrado"));
+    private Ad getAdOrThrow(long id){
+        return adRepository.findById(id);
     }
 
     public Ad editAd(Long id, User actor, String name, String breed, Integer age){
          Ad ad = getAdOrThrow(id);
         ad.edit(actor,name,breed,age);
         //log
-        auditService.register(actor.getId(),AuditAction.AD_UPDATED,Ad.class.getSimpleName());
+        auditService.register(actor.getId(),
+                              AuditAction.AD_UPDATED,
+                              Ad.class.getSimpleName());
         return ad;
     }
 
-    public AdService(AuditService auditService){
-        this.auditService = auditService;
+    public void uploadEvidence(Long adId, Evidence evidence,User actor){
+        Ad ad = adRepository.findById(adId);
+        ad.addEvidence(evidence);
+
+        auditService.register( actor.getId(),
+                               AuditAction.EVIDENCE_UPLOADED,
+                               "Ad:" + ad.getId()
+                );
     }
 }
 

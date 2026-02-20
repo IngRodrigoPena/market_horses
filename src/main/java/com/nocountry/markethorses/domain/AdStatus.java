@@ -5,5 +5,6 @@ public enum AdStatus {
     BORRADOR,
     EN_VERIFICACION,
     PUBLICADO,
-    NO_DISPONIBLE
+    NO_DISPONIBLE,
+    RECHAZADO
 }
