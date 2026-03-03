@@ -10,7 +10,6 @@ public class Ad {
     private final Horse horse;
     private final User seller;
     private AdStatus status;
-
     private final List<Evidence> evidences = new ArrayList<>();
 
     public Ad(Long id,Horse horse, User seller) {
@@ -37,19 +36,12 @@ public class Ad {
         return status;
     }
 
-
     public void edit(User actor, String newName, String newBreed, Integer newAge){
 
         //Regla 2: solo el SELLER dueño
-        if(!this.seller.getId().equals(actor.getId())){
-            throw new IllegalStateException("Solo el dueño del anuncio puede editarlo");
-        }
-
+       validateOwner(actor);
         //Regla 1: solo BORRADOR
-        if(this.status != AdStatus.BORRADOR){
-            throw new IllegalStateException("Solo se puede editar un anuncio en estado BORRADOR");
-        }
-
+        validateDraft();
         //actualizar datos del caballo
         this.horse.updateData(newName, newBreed, newAge);
     }
@@ -59,16 +51,13 @@ public class Ad {
     }
 
     public void addEvidence(Evidence evidence){
-        if(this.status != AdStatus.BORRADOR){
-            //throw new IllegalStateException("Cannot add evidence unless BORRADOR");
-            throw new IllegalStateException("Solo se puede agregar evidencia en el estado BORRADOR");
-        }
+
+        validateDraft();
 
         boolean duplicated = evidences.stream()
                 .anyMatch(e-> e.getType() == evidence.getType());
 
         if(duplicated){
-            //throw new IllegalStateException("Evidence type already exists");
             throw new IllegalStateException("Ese tipo de evidencia ya existe");
         }
 
@@ -76,19 +65,12 @@ public class Ad {
     }
 
     public void submitForVerification(User actor){
-        if(!seller.getId().equals(actor.getId())){
-            //throw new IllegalStateException("Only seller can submit");
-            throw new IllegalStateException("Unicamente el VENDEDOR puede enviar a verificacion");
-        }
 
-        if(this.status != AdStatus.BORRADOR){
-            //throw new IllegalStateException("Ad must be Borrador");
-            throw new IllegalStateException("Ad debe estar en modo BORRADOR");
-        }
+        validateOwner(actor);
+        validateDraft();
 
         if(evidences.isEmpty()){
-            //throw new IllegalStateException("Cannot submit without evidence");
-            throw new IllegalStateException("No se puede enviar sin Evidencia");
+            throw new IllegalStateException("Debe tener evidencia");
         }
 
         this.status = AdStatus.EN_VERIFICACION;
@@ -96,29 +78,71 @@ public class Ad {
         evidences.forEach(Evidence :: markAsPendingVerification);
     }
 
-    private boolean isSeller(User actor){
-        return this.seller.getId().equals(actor.getId());
-    }
-
-    public void approve(){
-
-        if(status != AdStatus.EN_VERIFICACION){
-            //throw new IllegalStateException("Ad must be in verification");
-            throw new IllegalStateException("Ad debe esta en VERIFICACION");
+    public void approve(User actor){
+        //valida  si el actor puede aprobar el Ad
+        if(actor.getRole() != Role.ADMIN){
+            throw new IllegalStateException("Solo ADMIN puede aprobar");
         }
 
-        //this.status = AdStatus.PUBLICADO;
-        status = AdStatus.PUBLICADO;
+        validatePending();
+
+        this.status = AdStatus.APROBADO;
     }
 
-    public void reject(){
+    public void reject(User actor ){
 
-        if(status != AdStatus.EN_VERIFICACION){
-            //throw new IllegalStateException("Ad must be in verification");
-            throw new IllegalStateException("Ad debe estar en VERIFICACION");
+        if(actor.getRole() != Role.ADMIN){
+            throw new IllegalStateException("Solo ADMIN puede rechazar");
         }
+
+        validatePending();
 
         status = AdStatus.RECHAZADO;
+    }
+
+    //Eliminar duplicaciones y mejorar legibilidad
+
+    private void validateOwner(User actor){
+        //if(!actor.equals(seller)){
+        if(!seller.getId().equals(actor.getId())){
+            throw new IllegalStateException("Solo el SELLER puede modificar el anuncio");
+        }
+    }
+
+    private void validateDraft(){
+        if(status != AdStatus.BORRADOR){
+            throw new IllegalStateException("Solo se puede editar/enviar un anuncio en estado BORRADOR");
+        }
+    }
+
+    private void validatePending(){
+        if(status != AdStatus.EN_VERIFICACION){
+            throw new IllegalStateException("Solo anuncios EN_VERIFICACION");
+        }
+    }
+
+    public void backToDraft(User actor){
+
+        validateOwner(actor);
+
+        if(this.status != AdStatus.RECHAZADO){
+            throw new IllegalStateException("Solo los Ads RECHAZADOS pueden volver a BORRADOR");
+        }
+
+        this.status = AdStatus.BORRADOR;
+    }
+
+    public void publish(User actor){
+
+        if(actor.getRole() != Role.ADMIN){
+            throw new IllegalStateException("Solo ADMIN puede publicar");
+        }
+
+        if(status != AdStatus.APROBADO){
+            throw new IllegalStateException("Para que el Ad sea PUBLICADO debe estar APROBADO");
+        }
+
+        status = AdStatus.PUBLICADO;
     }
 
 }

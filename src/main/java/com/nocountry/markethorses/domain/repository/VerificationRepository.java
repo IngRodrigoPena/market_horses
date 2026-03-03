@@ -4,4 +4,5 @@ import com.nocountry.markethorses.domain.Verification;
 
 public interface VerificationRepository {
     void save(Verification verification);
+    Verification findById(Long id);
 }

@@ -4,5 +4,6 @@ public enum EvidenceType {
     PHOTO,
     VETERINARY_CERTIFICATE,
     PEDIGREE,
-    OWNERSHIP_DOCUMENT
+    OWNERSHIP_DOCUMENT,
+    VIDEO
 }

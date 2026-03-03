@@ -6,5 +6,6 @@ public enum AdStatus {
     EN_VERIFICACION,
     PUBLICADO,
     NO_DISPONIBLE,
+    APROBADO,
     RECHAZADO
 }
