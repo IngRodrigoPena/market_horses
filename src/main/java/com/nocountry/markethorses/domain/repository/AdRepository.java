@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface AdRepository {
     Ad findById(Long id);
-    void save(Ad ad);
+    Ad save(Ad ad);
     List<Ad> findAll();
+    Long nextId();
 }

@@ -3,9 +3,13 @@ package com.nocountry.markethorses.controller;
 import com.nocountry.markethorses.domain.Ad;
 import com.nocountry.markethorses.domain.Role;
 import com.nocountry.markethorses.domain.User;
+import com.nocountry.markethorses.dto.ApproveRequest;
+import com.nocountry.markethorses.dto.EvidenceRequest;
+import com.nocountry.markethorses.dto.UpdateAdRequest;
 import com.nocountry.markethorses.service.AdService;
 import com.nocountry.markethorses.service.VerificationService;
 import org.springframework.web.bind.annotation.*;
+import com.nocountry.markethorses.dto.CreateAdRequest;
 
 import java.util.List;
 
@@ -23,26 +27,16 @@ public class AdController {
 
     @PostMapping("/ads")
     public Ad createAd(@RequestBody CreateAdRequest request){
-        User user = buildUser(request.getUserId());
-        return adService.createAd(
-                user,
-                request.getHorseName(),
-                request.getBreed(),
-                request.getAge()
-        );
+        return adService.createAd(request);
     }
 
     @PutMapping("/ads/{id}")
     public Ad editAd(@PathVariable Long id,
-                     @RequestBody EditAdRequest request){
+                     @RequestBody UpdateAdRequest request){
+
         User actor = buildUser(request.getUserId());
 
-        return adService.editAd(
-                id,
-                actor,
-                request.getHorseName(),
-                request.getBreed(),
-                request.getAge());
+        return adService.editAd(id,actor,request);
     }
 
     private User buildUser(Long userId){
@@ -63,14 +57,21 @@ public class AdController {
     }
 
     @PostMapping("/ads/{id}/evidence")
-    public void uploadEvidence(@PathVariable long id,
-                               @RequestParam Long userId,
-                               @RequestParam String url){
+    public void uploadEvidence(
+            @PathVariable Long id,
+            @RequestBody EvidenceRequest request
+    ) {
 
-        User actor = buildUser(userId);
+        User actor = buildUser(request.getUserId());
 
-        adService.uploadEvidence(id,url,actor);
+        adService.uploadEvidence(
+                id,
+                actor,
+                request.getFileUrl(),
+                request.getType()
+        );
     }
+
 
     @GetMapping("/ads/{id}")
     public Ad getId(@PathVariable Long id){
@@ -82,10 +83,11 @@ public class AdController {
         return adService.getAllAds();
     }
 
-    @PostMapping("/ads/{id}/approve")
-    public void approvedAd(@PathVariable Long id,
-                           @RequestParam Long userId){
-        User actor = buildAdmin(userId);
+   @PostMapping("/ads/{id}/approve")
+   //public void approveAd(@PathVariable Long id,
+    public void approve(@PathVariable Long id,
+                        @RequestBody ApproveRequest request){
+        User actor = buildAdmin(request.getUserId());
        verificationService.approveAd(id, actor);
     }
 
@@ -98,9 +100,9 @@ public class AdController {
     }
 
     @PostMapping("/ads/{id}/reject")
-    public void rejectAd(@PathVariable Long id,
-                       @RequestParam Long userId){
-        User actor = buildAdmin(userId);
+    public void reject(@PathVariable Long id,
+                       @RequestBody ApproveRequest request){
+        User actor = buildAdmin(request.getUserId());
         verificationService.rejectAd(id,actor);
     }
 }

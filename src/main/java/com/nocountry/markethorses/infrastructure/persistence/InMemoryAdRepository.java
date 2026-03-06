@@ -13,7 +13,18 @@ import java.util.Map;
 public class InMemoryAdRepository implements AdRepository {
 
     private final Map<Long,Ad> ads = new HashMap<>();
-    //private List<Ad> ads = new ArrayList<>();
+    private Long sequence = 1L;
+
+    @Override
+    public Long nextId(){
+        return sequence++;
+    }
+
+    @Override
+    public Ad save(Ad ad){
+        ads.put(ad.getId(),ad);
+        return ad;
+    }
 
     @Override
     public Ad findById(Long id){
@@ -25,13 +36,10 @@ public class InMemoryAdRepository implements AdRepository {
     }
 
     @Override
-    public void save(Ad ad){
-        ads.put(ad.getId(),ad);
-    }
-
-    @Override
     public List<Ad> findAll(){
         return new ArrayList<>(ads.values());
     }
+
+
 }
 

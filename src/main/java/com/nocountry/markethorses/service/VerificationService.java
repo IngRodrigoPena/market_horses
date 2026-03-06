@@ -7,6 +7,7 @@ import com.nocountry.markethorses.domain.Verification;
 import com.nocountry.markethorses.domain.audit.AuditAction;
 import com.nocountry.markethorses.domain.repository.AdRepository;
 import com.nocountry.markethorses.domain.repository.VerificationRepository;
+import com.nocountry.markethorses.exception.BusinessException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,7 +35,8 @@ public class VerificationService {
         Ad ad = getAdOrThrow(adId);
 
         if(ad.getStatus() != AdStatus.EN_VERIFICACION){
-            throw new IllegalStateException("Ad debe estar EN_VERIFICACION");
+            //throw new IllegalStateException("Ad debe estar EN_VERIFICACION");
+            throw new BusinessException("Ad debe estar EN_VERIFICACION");
         }
 
         Verification verification = new Verification(

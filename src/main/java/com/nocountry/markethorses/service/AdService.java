@@ -3,81 +3,97 @@ package com.nocountry.markethorses.service;
 import com.nocountry.markethorses.domain.*;
 import com.nocountry.markethorses.domain.audit.AuditAction;
 import com.nocountry.markethorses.domain.repository.AdRepository;
+import com.nocountry.markethorses.domain.repository.HorseRepository;
+import com.nocountry.markethorses.domain.repository.UserRepository;
+import com.nocountry.markethorses.dto.CreateAdRequest;
+import com.nocountry.markethorses.dto.UpdateAdRequest;
 import org.springframework.stereotype.Service;
-
-import javax.imageio.IIOException;
 import java.util.List;
 
 @Service
 public class AdService {
 
     private final AdRepository adRepository;
+    private final HorseRepository horseRepository;
+    private final UserRepository userRepository;
     private final AuditService auditService;
-    private Long nextId = 1L;
     private Long evidenceId = 1L;
 
     public AdService(AdRepository adRepository,
+                     HorseRepository horseRepository,
+                     UserRepository userRepository,
                      AuditService auditService){
         this.adRepository = adRepository;
+        this.horseRepository = horseRepository;
+        this.userRepository = userRepository;
         this.auditService = auditService;
     }
 
-    public Ad createAd(User user,String horseName,String breed,Integer age){
+    public Ad createAd(CreateAdRequest request){
 
-        //Regla: solo SELLER puede crear anuncio
-        if(user.getRole() != Role.SELLER){
-            throw  new IllegalArgumentException("Solo un SELLER puede crear un anuncio.");
-        }
+        Horse horse = horseRepository.findById(request.getHorseId());
+        User seller = userRepository.findById(request.getSellerId());
+        Long id = adRepository.nextId();
 
-        //Crear Horse
-        Horse horse = new Horse();
-        horse.setName(horseName);
-        horse.setBreed(breed);
-        horse.setAge(age);
-        horse.setOwner(user);
-        //create AD (nace en BORRADOR automaticamente)
-        Ad ad = new Ad(nextId++,horse,user);
-       //agrega a la lista
-        adRepository.save(ad);
-        //log
-        auditService.register(user.getId(),
-                              AuditAction.AD_CREATED,
-                              "Ad:" + ad.getId());
-        return(ad);
+        Ad ad = new Ad(id,horse,seller);
+
+        Ad savedAd = adRepository.save(ad);
+
+        //auditoria
+        auditService.register(
+                seller.getId(),
+                AuditAction.AD_CREATED,
+                "Ad:" + savedAd.getId()
+        );
+
+        //return adRepository.save(ad);
+        return savedAd;
+
     }
 
     private Ad getAdOrThrow(Long id){
         return adRepository.findById(id);
     }
 
-    public Ad editAd(Long id, User actor, String name, String breed, Integer age){
+     public Ad editAd(Long id, User actor, UpdateAdRequest request){
+
          Ad ad = getAdOrThrow(id);
-        ad.edit(actor,name,breed,age);
+
+        ad.edit(actor,
+                request.getHorseName(),
+                request.getBreed(),
+                request.getAge()
+        );
+
         adRepository.save(ad);
-        //log
+        //auditoria
         auditService.register(actor.getId(),
                               AuditAction.AD_UPDATED,
                               "Ad:" + ad.getId());
         return ad;
     }
 
-    public void uploadEvidence(Long adId,String url,User actor){
+    public void uploadEvidence(Long adId, User actor, String fileUrl, String type) {
 
-        //Ad ad = adRepository.findById(adId);
         Ad ad = getAdOrThrow(adId);
 
-        Evidence evidence = new Evidence( evidenceId++,
-                                          EvidenceType.PHOTO,
-                                          url
+        EvidenceType evidenceType = EvidenceType.valueOf(type);
+
+        Evidence evidence = new Evidence(
+                evidenceId++,
+                //evidenceType,
+                EvidenceType.valueOf(type),
+                fileUrl
         );
 
-        ad.addEvidence(evidence);
+        ad.addEvidence(actor, evidence);
+
         adRepository.save(ad);
 
         auditService.register(
                 actor.getId(),
                 AuditAction.EVIDENCE_UPLOADED,
-                "Ad:" +ad.getId()
+                "Ad:" + ad.getId()
         );
     }
 
@@ -103,24 +119,6 @@ public class AdService {
         return adRepository.findAll();
     }
 
-    /*public Ad rejectAd(User admin, Long adId){
-
-        if(admin.getRole() != Role.ADMIN){
-            throw  new IllegalStateException("Solo ADMIN puede rechazar");
-        }
-
-        Ad ad = adRepository.findById(adId);
-
-        if(ad.getStatus() != AdStatus.EN_VERIFICACION){
-            throw  new IllegalStateException("Solo ads EN_VERIFICACION pueden rechazarse");
-        }
-
-        ad.setStatus(AdStatus.RECHAZADO);
-
-        adRepository.save(ad);
-
-        return ad;
-    }*/
 }
 
 

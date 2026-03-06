@@ -298,3 +298,39 @@ Este proyecto demuestra:
 
 ---
 
+
+
+````
+## Manejo de Errores en la API
+
+La API implementa una estrategia centralizada de manejo de excepciones utilizando `@RestControllerAdvice`.  
+Este enfoque permite gestionar los errores de forma consistente en todos los endpoints.
+
+### Excepciones personalizadas
+
+Se han definido las siguientes excepciones personalizadas:
+
+- `NotFoundException`
+- `BusinessException`
+- `UnauthorizedException`
+
+### Estructura de respuesta de errores
+
+Todas las respuestas de error de la API siguen una estructura uniforme:
+
+```json
+{
+  "error": "ERROR_TYPE",
+  "message": "Descripción del error",
+  "timestamp": "ISO_DATE"
+}
+````
+
+### Beneficios
+
+* Mantiene una **estructura de respuesta consistente** para todos los errores.
+* Facilita la **integración para los consumidores de la API** al proporcionar respuestas predecibles.
+* Mejora la **mantenibilidad y escalabilidad** del código al centralizar el manejo de excepciones.
+
+```
+
